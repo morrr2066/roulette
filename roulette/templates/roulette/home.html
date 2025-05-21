@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Roulette Game{% endblock %}
+
+{% block content %}
+  <h1 class="text-center">Welcome to the Roulette Game!</h1>
+
+
+  <!-- Wrapper div for relative positioning -->
+  <div style="position: relative; width: 300px; height: 300px; margin: 40px auto;">
+
+    <!-- White pointer fixed above the wheel -->
+    <div style="
+      position: absolute;
+      top: 280px;  /* position above the wheel */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 30px solid white;  /* white pointer */
+      z-index: 10;
+    "></div>
+
+    <!-- Roulette Wheel -->
+    <div id="roulette-wheel" style="
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        border: 5px solid #333;
+        background:
+          conic-gradient(
+            red 0deg 30deg,
+            black 30deg 60deg,
+            red 60deg 90deg,
+            black 90deg 120deg,
+            red 120deg 150deg,
+            black 150deg 180deg,
+            red 180deg 210deg,
+            black 210deg 240deg,
+            red 240deg 270deg,
+            black 270deg 300deg,
+            red 300deg 330deg,
+            black 330deg 360deg
+          );
+        position: relative;
+    ">
+      <!-- Center circle for styling -->
+      <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        border: 3px solid #333;
+        z-index: 2;
+      "></div>
+    </div>
+  </div>
+  <div class="text-center mb-3">
+    <label for="bet-amount">Enter your bet amount:</label>
+    <input type="number" id="bet-amount" min="1" step="0.01" style="width: 100px;" />
+  </div>
+
+  <div class="text-center mb-3">
+    <label>
+        <input type="radio" name="bet-color" value="Red" checked /> Red
+    </label>
+
+    <label style="margin-left: 20px;">
+        <input type="radio" name="bet-color" value="Black" /> Black
+    </label>
+  </div>
+
+  {% if user.is_authenticated %}
+  <div class="text-center">
+    <button id="spin-button" class="btn btn-primary">Spin</button>
+  </div>
+{% endif %}
+
+  <p id="result" class="text-center mt-3"></p>
+
+<script>
+  const wheel = document.getElementById('roulette-wheel');
+  const spinBtn = document.getElementById('spin-button');
+  const result = document.getElementById('result');
+  const betAmountInput = document.getElementById('bet-amount');
+
+  spinBtn.addEventListener('click', () => {
+    const betAmount = parseFloat(betAmountInput.value);
+    if (!betAmount || betAmount <= 0) {
+      alert('Please enter a valid bet amount greater than zero.');
+      return;
+    }
+
+    // Get selected color
+    const betColorRadio = document.querySelector('input[name="bet-color"]:checked');
+    const betColor = betColorRadio ? betColorRadio.value : null;
+
+    spinBtn.disabled = true;
+    result.textContent = '';
+
+    // Spin the wheel randomly
+    const randomDegree = Math.floor(Math.random() * 360) + 3600; // spin multiple times for effect
+    wheel.style.transition = 'transform 5s ease-out';
+    wheel.style.transform = `rotate(${randomDegree}deg)`;
+
+    // After spin animation completes, send bet info to server
+    setTimeout(() => {
+      const normalizedDegree = randomDegree % 360;
+      let segmentIndex = Math.floor((360 - normalizedDegree) / 30);
+      if (segmentIndex === 12) segmentIndex = 0;
+      const colors = ['Red', 'Black'];
+      const winnerColor = colors[segmentIndex % 2];
+
+      // Send AJAX POST to server with betAmount and betColor and winnerColor
+      fetch("{% url 'roulette:spin_result' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          bet_amount: betAmount,
+          bet_color: betColor,
+          winner_color: winnerColor
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Response from server:", data);  // <--- This logs the server response
+        if(data.success) {
+          result.textContent = `The ball landed on ${winnerColor}. ` + data.message;
+          const moneyDisplay = Array.from(document.querySelectorAll('a.nav-link')).find(el => el.textContent.includes("Money"));
+          if (moneyDisplay && data.new_money !== undefined) {
+            moneyDisplay.textContent = `Money: $${data.new_money}`;
+          }
+        } else {
+          result.textContent = 'Error: ' + data.error;
+        }
+        wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${normalizedDegree}deg)`;
+        spinBtn.disabled = false;
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error);  // <--- This logs fetch errors in console
+        result.textContent = 'An error occurred during the bet.';
+        spinBtn.disabled = false;
+      });
+    }, 5200);
+  });
+</script>
+
+{% endblock %}
