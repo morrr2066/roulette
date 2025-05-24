@@ -7,11 +7,6 @@ from decimal import Decimal
 
 
 
-
-def home(request):
-    return render(request, 'roulette/home.html')
-
-
 @csrf_exempt  # Allow AJAX requests
 @login_required  # Make sure the user is logged in
 def spin_result(request):
@@ -46,3 +41,7 @@ def spin_result(request):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+@login_required
+def roulette_home(request):
+    return render(request, 'roulette/roulette.html')

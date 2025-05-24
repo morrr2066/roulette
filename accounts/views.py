@@ -8,18 +8,17 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('login')  # <---- Here
+            return redirect('login')
     else:
         form = UserCreationForm()
+
+    print("Form fields:", form.fields)  # Debug print
+
     return render(request, 'accounts/register.html', {'form': form})
 
-@login_required
-def roulette_home(request):
-    context = {
-        'username': request.user.username,
-        'money': 1000,  # placeholder
-    }
-    return render(request, 'roulette/roulette.html', context)
+
+
+
 
 @login_required
 def leaderboard(request):

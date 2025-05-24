@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-6vq0jxmt=awrv#^uc5n!f=0s0hisl71n501do$f+$5)i+$ts(2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['roulette-g7hz.onrender.com', 'localhost', '127.0.0.1']
 
