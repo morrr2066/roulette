@@ -26,6 +26,5 @@ def leaderboard(request):
     profiles = Profile.objects.select_related('user').order_by('-money')
     return render(request, 'leaderboard.html', {'profiles': profiles})
 
-def home(request):
-    return render(request, 'roulette/home.html')
+
 
