@@ -27,4 +27,5 @@ def leaderboard(request):
     return render(request, 'leaderboard.html', {'profiles': profiles})
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'roulette/home.html')
+
