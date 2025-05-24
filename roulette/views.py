@@ -8,7 +8,7 @@ from decimal import Decimal
 
 
 
-def roulette_home(request):
+def home(request):
     return render(request, 'roulette/home.html')
 
 
